@@ -3,15 +3,15 @@ APP = $(APP_NAME)
 APP_NAME=ft_traceroute
 SRCS_DIR = src
 HEADERS_DIR = headers
-SRCS = $(addprefix $(SRCS_DIR)/, main.c parse_args.c tr_data.c utils.c resources.c net.c)
+SRCS = $(addprefix $(SRCS_DIR)/, main.c parse_args.c tr_data.c utils.c resources.c net.c traceroute.c)
 
-HEADERS = $(addprefix $(HEADERS_DIR)/, tr_data.h exit.h utils.h resources.h net.h)
+HEADERS = $(addprefix $(HEADERS_DIR)/, tr_data.h utils.h resources.h net.h traceroute.h)
 
 OBJS = $(SRCS:.c=.o)
 
 CC = gcc
  
-CFLAGS =  -c -g -Wall -Wextra -Werror # Flag for implicit rules.
+CFLAGS =  -c -g #-Wall -Wextra -Werror # Flag for implicit rules.
 # -Wall - show all error messager
 # -c compile (produce *.o files but not link)
 # -g set symbolic points in file, so debugging is possible

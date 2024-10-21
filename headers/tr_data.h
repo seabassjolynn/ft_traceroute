@@ -19,8 +19,6 @@ struct s_tr_data
     char target_addr[INET_ADDRSTRLEN];
     struct timeval probe_timeout;
     bool print_man_only;
-    int max_hops;
-    int probes_per_hop_num;
 };
 
 #endif

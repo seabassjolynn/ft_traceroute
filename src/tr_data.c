@@ -5,7 +5,7 @@ struct s_tr_data g_tr_data;
 void set_defaults()
 {
     struct timeval timeval;
-    timeval.tv_sec = 1;
+    timeval.tv_sec = 2;
     timeval.tv_usec = 0;
     
     g_tr_data.probe_timeout = timeval; 

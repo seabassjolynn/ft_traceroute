@@ -1,9 +1,8 @@
 #include <stdio.h>
 #include <string.h>
-
+#include <stdlib.h> //EXIT_FAILURE const
 #include "tr_data.h"
 #include "utils.h"
-#include "exit.h"
 
 void parse_args(int ac, char *av[]) {
     g_tr_data.executable_name = av[0];
@@ -11,7 +10,7 @@ void parse_args(int ac, char *av[]) {
     if (ac != 2)
     {
         fprintf(stderr, "%s requires only one argument: host or --help\n", g_tr_data.executable_name);
-        exit(ERROR);
+        exit(EXIT_FAILURE);
     }
     
     if (av[1][0] == '-')
@@ -24,7 +23,7 @@ void parse_args(int ac, char *av[]) {
         else
         {
             fprintf(stderr, "%s: unkown argument %s\n", g_tr_data.executable_name, av[1]);    
-            exit(ERROR);
+            exit(EXIT_FAILURE);
         }
     }
     else
