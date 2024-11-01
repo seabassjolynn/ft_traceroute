@@ -20,6 +20,10 @@
 #include <sys/socket.h>
 #include <netdb.h>
 
+#include <string.h> 
+#include <arpa/inet.h>
+#include <unistd.h>
+
 #define IP_PACKET_BUFFER_LENGTH 1024
 #define IP_HEADER_LENGTH 20
 #define ICMP_TIME_EXCEEDED_TYPE 11
@@ -60,6 +64,21 @@ struct s_ip_frame
     struct s_udp_frame body;
 };
 
+struct s_ping_header
+{
+    uint8_t type;
+    uint8_t code;
+    uint16_t checksum;
+    uint16_t identifier;
+    uint16_t sequence_number;
+};
+
+struct s_icmp_echo_frame
+{
+    struct s_ping_header header;
+    unsigned char payload[10];
+};
+
 void get_addr_info(char *host, struct addrinfo **addr_info);
 
 void open_send_socket();
@@ -84,6 +103,11 @@ struct s_ip_frame create_ip_frame(uint8_t ttl, uint32_t dst_ip, struct s_udp_fra
 
 struct iphdr create_ip_header(uint8_t ttl, uint32_t src_ip_net, uint32_t dst_ip_net, uint16_t payload_len);
 
+struct s_icmp_echo_frame create_echo_request();
+
+uint32_t get_local_ip();
+
+
 // #define SRC_ADDR_OFFSET_IN_IP_PACKET 12
 
 // int get_ip_header_length_in_bytes(uint8_t *packet);
@@ -99,7 +123,7 @@ struct iphdr create_ip_header(uint8_t ttl, uint32_t src_ip_net, uint32_t dst_ip_
 // // ICMP: Destination Unreachable Message - length is 8 (header) + ip header + 64 bits of packet data = 8 + 60 + 8 = 76 byte.
 // // the other types of ICMP messages are shorter
 
-// #define ECHO_REQUEST_TYPE 8
+#define ECHO_REQUEST_TYPE 8
 
 // #define ECHO_REQUEST_CODE 0
 
@@ -114,14 +138,7 @@ struct iphdr create_ip_header(uint8_t ttl, uint32_t src_ip_net, uint32_t dst_ip_
 // # include <stdint.h>
 // # include <stdbool.h>
 
-// struct s_ping_header
-// {
-//     uint8_t type;
-//     uint8_t code;
-//     uint16_t checksum;
-//     uint16_t identifier;
-//     uint16_t sequence_number;
-// };
+
 
 // struct s_icmp_echo_packet
 // {

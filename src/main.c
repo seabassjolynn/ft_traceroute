@@ -14,6 +14,7 @@ static void print_man() {
 
 int main(int ac, char **av)
 {
+    
     set_defaults();
     parse_args(ac, av);
 

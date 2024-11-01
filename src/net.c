@@ -167,7 +167,7 @@ struct iphdr create_ip_header(uint8_t ttl, uint32_t src_ip_net, uint32_t dst_ip_
     hdr.check = 0;
     hdr.saddr = src_ip_net;
     hdr.daddr = dst_ip_net;
-    hdr.check = calculate_checksum(&hdr, sizeof(struct iphdr));
+    //hdr.check = calculate_checksum(&hdr, sizeof(struct iphdr));
     return hdr;
 }
 
@@ -245,6 +245,103 @@ void get_src_addr(void *ip_packet, char *ipv4_addr_str)
     int_addr_to_ipv4_addr_str(addr, ipv4_addr_str);
 }
 
+static void convert_ip_to_string(uint32_t ip, char *str) {
+    struct in_addr ip_addr;
+    ip_addr.s_addr = htonl(ip);  // Convert to network byte order
+    inet_ntop(AF_INET, &ip_addr, str, INET_ADDRSTRLEN);
+}
+
+uint32_t get_local_ip(char *local_ip) 
+{
+    int sock;
+    struct sockaddr_in remote_addr;
+    struct sockaddr_in local_addr;
+    socklen_t addr_len = sizeof(local_addr);
+    struct timeval timeout;
+    int ttl;
+
+    sock = socket(AF_INET, SOCK_RAW, IPPROTO_ICMP);
+    if (sock < 0) {
+        perror("socket");
+        exit(EXIT_FAILURE);
+    }
+    timeout.tv_sec = 1;
+    timeout.tv_usec = 0;
+    
+    if (setsockopt(sock, SOL_SOCKET, SO_RCVTIMEO, (const void*)&timeout, sizeof(struct timeval)) != 0)
+    {
+        perror("setsockopt");
+        free_resources();
+        exit(EXIT_FAILURE);
+    }
+    
+    ttl = 3;
+    
+    if (setsockopt(sock, IPPROTO_IP, IP_TTL, &ttl, sizeof(ttl)) != 0) 
+    {
+        perror("setsockopt");
+        free_resources();
+        exit(EXIT_FAILURE);
+    }
+
+
+    memset(&remote_addr, 0, sizeof(remote_addr));
+    remote_addr.sin_family = AF_INET;
+    inet_pton(AF_INET, "8.8.8.8", &remote_addr.sin_addr);  // Google DNS
+    
+    struct s_icmp_echo_frame icmp_frame = create_echo_request();
+    
+    int sendResult = sendto(sock, &icmp_frame, sizeof(struct s_icmp_echo_frame), 0, (struct sockaddr*)&remote_addr, addr_len);
+    
+    if (sendResult < 0) 
+    {
+        fprintf(stderr, "Error when sending ICPM packet. Error: %s\n", strerror(errno));
+        free_resources();
+        exit(EXIT_FAILURE);
+    }
+    
+    uint8_t received_ip_packet[4096];
+    ft_memset(received_ip_packet, 0, 4096);
+    
+    sendResult = recvfrom(sock, received_ip_packet, 4096, 0, NULL, NULL);
+    if (sendResult < 0)
+    {
+        fprintf(stderr, "Error when receiving CPM packet. Error: %s\n", strerror(errno));
+        free_resources();
+        exit(EXIT_FAILURE);
+    }
+    close(sock);
+    struct iphdr header = *((struct iphdr *) received_ip_packet); 
+    
+    
+
+    char ip[INET_ADDRSTRLEN];
+    
+    convert_ip_to_string(header.daddr, ip);
+    printf("Local from ip header: %s\n", ip);
+    
+    struct s_icmp_error_frame *received_icmp_frame = (struct s_icmp_error_frame *) (received_ip_packet + IP_HEADER_LENGTH);
+
+    convert_ip_to_string(received_icmp_frame->original_data.ip_header.saddr, ip);
+    printf("Local from orig data: %s\n", ip);
+
+    return header.daddr;
+}
+
+struct s_icmp_echo_frame create_echo_request()
+{
+    struct s_icmp_echo_frame frame;
+    
+    frame.header.type = ECHO_REQUEST_TYPE;
+    frame.header.code = 0;
+    frame.header.checksum = 0;
+    frame.header.sequence_number = 1;
+    frame.header.identifier = 1;
+    memset(&frame.payload, 'A', sizeof(frame.payload));
+    frame.header.checksum = calculate_checksum(&frame, sizeof(struct s_icmp_echo_frame));
+    return frame;
+}
+
 // uint32_t get_local_addr_in_network_order()
 // {
 //     struct s_icmp_echo_packet icmp_echo;
@@ -257,21 +354,7 @@ void get_src_addr(void *ip_packet, char *ipv4_addr_str)
 
 
 
-// // struct s_icmp_echo_packet create_echo_request()
-// // {
-// //     struct s_ping_header header;
-// //     struct s_icmp_echo_packet packet;
-    
-// //     header.type = ECHO_REQUEST_TYPE;
-// //     header.code = 0;
-// //     header.checksum = 0;
-// //     header.sequence_number = -1;
-// //     header.identifier = g_ping_session.id;
-    
-// //     packet.header = header;
-// //     memset(&packet.payload, 'A', sizeof(packet.payload));
-// //     return packet;
-// // }
+
 
 // bool is_ping_error_reply(int code)
 // {
