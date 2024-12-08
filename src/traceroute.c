@@ -5,12 +5,18 @@ static float calc_round_trip_time_ms(struct timeval *start, struct  timeval *end
     return (float)((end->tv_sec - start->tv_sec) * 1000000 + (end->tv_usec - start->tv_usec)) / 1000.0;
 }
 
+static bool is_tr_icmp(struct s_icmp_error_frame *frame)
+{
+    return frame->original_data.ip_header.protocol = IPPROTO_UDP && 
+    ((frame->type == ICMP_TYPE_TIME_EXCEEDED && frame->code == ICMP_CODE_TIME_EXCEEDED_IN_TRANSIT) ||
+    (frame->type == ICMP_TYPE_DESTINATION_UNREACHABLE && frame->code == ICMP_CODE_PORT_UNREACHABLE));
+}
+
 static struct s_probe probe(uint32_t local_ip, int hop_num, uint16_t dst_prot)
 {
     set_ttl(g_resources.send_socket, hop_num);
     
     ((struct sockaddr_in*) g_resources.target_addr_info->ai_addr)->sin_port = htons(dst_prot);
-    
     
     struct timeval request_time = current_time();
     
@@ -44,28 +50,30 @@ static struct s_probe probe(uint32_t local_ip, int hop_num, uint16_t dst_prot)
     
     while ((result = recvfrom(g_resources.receive_socket, received_ip_packet, IP_PACKET_BUFFER_LENGTH, 0, NULL, NULL)) > 0)
     {
-        printf("Received something %d\n", result);
+        DEBUG_LOG("Received something %d\n", result);
+        
         struct s_icmp_error_frame *received_icmp_frame = (struct s_icmp_error_frame *) (received_ip_packet + IP_HEADER_LENGTH);
-        if (received_icmp_frame->original_data.ip_header.protocol == IPPROTO_UDP && received_icmp_frame->type == ICMP_TIME_EXCEEDED_TYPE && received_icmp_frame->code == ICMP_TIME_EXCEEDED_IN_TRANSIT_CODE)
+        if (is_tr_icmp(received_icmp_frame))
         {
-            printf("Sent checksum: %d\n", udp_frame.header.checksum);
-            printf("Received checksum: %d\n", received_icmp_frame->original_data.udp_frame.header.checksum);
+            DEBUG_LOG("Sent checksum: %d\n", udp_frame.header.checksum);
+            DEBUG_LOG("Received checksum: %d\n", received_icmp_frame->original_data.udp_frame.header.checksum);
             if (received_icmp_frame->original_data.udp_frame.header.checksum == udp_frame.header.checksum)
             {
                 struct s_probe probe;
                 get_src_addr(received_ip_packet, probe.remote_addr_str);               
                 struct timeval reply_time = current_time();
                 probe.round_trip_time = calc_round_trip_time_ms(&request_time, &reply_time);
+                probe.reached_destination = received_icmp_frame->type == ICMP_TYPE_DESTINATION_UNREACHABLE && received_icmp_frame->code == ICMP_CODE_PORT_UNREACHABLE;
                 return probe;
             }
             else
             {
-                printf("Didn't match body\n");
+                DEBUG_LOG("Didn't match body\n");
             }
         }
         else
         {
-            printf("Not error reply");
+            DEBUG_LOG("Not error reply");
         }
     }
     return probe;
@@ -76,7 +84,27 @@ static void print_traceroute_header()
     printf("traceroute to %s (%s), %d hops max\n", g_tr_data.target_host_arg, g_tr_data.target_addr, MAX_HOPS);
 }
 
+static void print_hop_num(int hop_num)
+{
+    printf("%3d   ", hop_num);
+}
 
+static void print_probe(int probe_num_in_hop, struct s_probe *prev_probe, struct s_probe *current_probe)
+{
+    if (probe_num_in_hop != 0)
+            printf("  ");
+    if (current_probe->round_trip_time == -1)
+        printf("*");
+    else if (prev_probe->round_trip_time == -1 || ft_strncmp(prev_probe->remote_addr_str, current_probe->remote_addr_str, INET_ADDRSTRLEN) != 0)
+    {
+        printf("%s  %.3fms", current_probe->remote_addr_str, current_probe->round_trip_time);
+    }
+    else
+        printf("%.3fms", current_probe->round_trip_time);
+
+    if (probe_num_in_hop == PROBES_PER_HOP_NUM - 1)
+        printf("\n");
+}
 
 void traceroute()
 {
@@ -87,23 +115,29 @@ void traceroute()
     uint32_t local_ip = get_local_ip();
     
     char local_addr[INET_ADDRSTRLEN];
-    
-    while (hop_num <= MAX_HOPS)
+    bool reached_destination = false;
+    while (!reached_destination)
     {
+        print_hop_num(hop_num);
+        
         int probe_num = 0;
+        struct s_probe prev_probe;
+        prev_probe.round_trip_time = -1;
+        
+        struct s_probe current_probe;
+        
         while(probe_num < PROBES_PER_HOP_NUM)
         {
-            struct s_probe p = probe(local_ip, hop_num, port);
-            if (p.round_trip_time > 0)
-            {
-                printf("Host: %s time: %f\n", p.remote_addr_str, p.round_trip_time);
-            }
-            else
-            {
-                printf("Time out\n");
-            }
+            prev_probe = current_probe;
+            
+            //printf("Start\n");
+            current_probe = probe(local_ip, hop_num, port);
+            //printf("End\n");
+            
+            print_probe(probe_num, &prev_probe, &current_probe);
             probe_num++;
         }
+        reached_destination = current_probe.reached_destination;
         port++;
         hop_num++;
     }

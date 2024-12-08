@@ -21,6 +21,10 @@ CFLAGS =  -c -g #-Wall -Wextra -Werror # Flag for implicit rules.
 # library name in Unix is libxxxxx.a 
 # these two flags are needed by linker
 
+ifdef DEBUG
+    CFLAGS += -DDEBUG
+endif
+
 .PHONY: all clean fclean re run #these targets will not be treated as targets that produce files. Target that produce file gets executed if file doesn't exist or if file exists but it its dependecies are fresher. Phone targets gets executed every time they are called
 #below is rule. all - rule name, after ":" go dependency that is needed to execute rule
 #all is the rule common to all make files. By convention it must compile all system

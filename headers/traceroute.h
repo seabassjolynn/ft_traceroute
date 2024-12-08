@@ -16,6 +16,7 @@ struct s_probe
 {
     char remote_addr_str[INET_ADDRSTRLEN];
     float round_trip_time;
+    bool reached_destination;
 };
 
 #endif

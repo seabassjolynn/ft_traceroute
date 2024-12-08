@@ -318,12 +318,12 @@ uint32_t get_local_ip(char *local_ip)
     char ip[INET_ADDRSTRLEN];
     
     convert_ip_to_string(header.daddr, ip);
-    printf("Local from ip header: %s\n", ip);
+    DEBUG_LOG("Local from ip header: %s\n", ip);
     
     struct s_icmp_error_frame *received_icmp_frame = (struct s_icmp_error_frame *) (received_ip_packet + IP_HEADER_LENGTH);
 
     convert_ip_to_string(received_icmp_frame->original_data.ip_header.saddr, ip);
-    printf("Local from orig data: %s\n", ip);
+    DEBUG_LOG("Local from orig data: %s\n", ip);
 
     return header.daddr;
 }
