@@ -59,7 +59,6 @@ static struct s_probe probe(uint32_t local_ip, int hop_num, uint16_t dst_prot)
             DEBUG_LOG("Received checksum: %d\n", received_icmp_frame->original_data.udp_frame.header.checksum);
             if (received_icmp_frame->original_data.udp_frame.header.checksum == udp_frame.header.checksum)
             {
-                struct s_probe probe;
                 get_src_addr(received_ip_packet, probe.remote_addr_str);               
                 struct timeval reply_time = current_time();
                 probe.round_trip_time = calc_round_trip_time_ms(&request_time, &reply_time);
@@ -96,12 +95,10 @@ static void print_probe(int probe_num_in_hop, struct s_probe *prev_probe, struct
     if (current_probe->round_trip_time == -1)
         printf("*");
     else if (prev_probe->round_trip_time == -1 || ft_strncmp(prev_probe->remote_addr_str, current_probe->remote_addr_str, INET_ADDRSTRLEN) != 0)
-    {
         printf("%s  %.3fms", current_probe->remote_addr_str, current_probe->round_trip_time);
-    }
     else
         printf("%.3fms", current_probe->round_trip_time);
-
+    fflush(stdout);
     if (probe_num_in_hop == PROBES_PER_HOP_NUM - 1)
         printf("\n");
 }
@@ -121,18 +118,17 @@ void traceroute()
         print_hop_num(hop_num);
         
         int probe_num = 0;
+        
         struct s_probe prev_probe;
-        prev_probe.round_trip_time = -1;
         
         struct s_probe current_probe;
+        current_probe.round_trip_time = -1;
         
         while(probe_num < PROBES_PER_HOP_NUM)
         {
             prev_probe = current_probe;
             
-            //printf("Start\n");
             current_probe = probe(local_ip, hop_num, port);
-            //printf("End\n");
             
             print_probe(probe_num, &prev_probe, &current_probe);
             probe_num++;

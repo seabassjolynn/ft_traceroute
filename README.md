@@ -6,9 +6,10 @@ hight number like 33443, this is because UDP packet shouldn't be handled by the 
 hence traceroute will know on receiving of such reply, that host was reached. With TCP, the port number doesn't matter, because host will reply first with  
 either TCP: SYN-ACK (if port is opened) or SYN-RST before any TCP communication starts. In case of ICMP, echo reply will come back to traceroute, so again, no  
 probe packet handling will take place.
-2. When traceroute uses udp (by default) it sends udp frames with different ports. For the 1st TTL, that make 3 probes, traceroute uses one dst port (strat port is 33435), for the  
+2. When traceroute uses udp (by default) it sends udp frames with different ports. For the 1st TTL, that makes 3 probes, traceroute uses one dst port (strat port is 33435), for the  
 next 3 it uses 1st dst port + 1 etc (this is at least how it works on debian 12).
-3. On debian 12 traceroute sends probe, whats for an answer, then sends probe etc.
+3. On debian 12 traceroute sends probe, waits for an answer, then sends probe etc. Contrary to other existing traceroute versions which make send all  
+the probes and then wait for the replies.
 ## Use Cases
 
 <details>
@@ -129,12 +130,4 @@ next 3 it uses 1st dst port + 1 etc (this is at least how it works on debian 12)
 <details>
     <summary>-q nqueries number of queries per hop</summary>
 </details>
-<details>
-    <summary></summary>
-</details>
-<details>
-    <summary></summary>
-</details>
-<details>
-    <summary></summary>
-</details>
+

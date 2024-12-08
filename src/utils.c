@@ -47,3 +47,20 @@ void *ft_memset(void *b, int c, size_t len)
 	}
 	return (b);
 }
+
+void *ft_memcpy(void *dst, const void *src, size_t n)
+{
+	unsigned char	*src_mem;
+	unsigned char	*dst_mem;
+	size_t			index;
+
+	src_mem = (unsigned char*)src;
+	dst_mem = (unsigned char*)dst;
+	index = 0;
+	while (n--)
+	{
+		dst_mem[index] = src_mem[index];
+		index++;
+	}
+	return (dst_mem);
+}
