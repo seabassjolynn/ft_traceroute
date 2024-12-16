@@ -9,7 +9,7 @@ void parse_args(int ac, char *av[]) {
     
     if (ac != 2)
     {
-        fprintf(stderr, "%s requires only one argument: host or --help\n", g_tr_data.executable_name);
+        printf("%s requires only one argument: host or --help\n", g_tr_data.executable_name);
         exit(EXIT_FAILURE);
     }
     
@@ -22,7 +22,7 @@ void parse_args(int ac, char *av[]) {
         }
         else
         {
-            fprintf(stderr, "%s: unkown argument %s\n", g_tr_data.executable_name, av[1]);    
+            printf("%s: unkown argument %s\n", g_tr_data.executable_name, av[1]);    
             exit(EXIT_FAILURE);
         }
     }

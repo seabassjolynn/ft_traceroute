@@ -27,7 +27,7 @@ int main(int ac, char **av)
     
     get_addr_info(g_tr_data.target_host_arg, &g_resources.target_addr_info);
 
-    sockaddr_to_ipv4_addr_str(g_resources.target_addr_info->ai_addr, g_tr_data.target_addr);
+    sockaddr_to_ipv4_str(g_resources.target_addr_info->ai_addr, g_tr_data.target_ipv4_str);
 
     open_send_socket();
     open_receive_socket();

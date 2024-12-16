@@ -11,7 +11,7 @@ void get_addr_info(char *host, struct addrinfo **addr_info)
     int result = getaddrinfo(host, NULL, &hints, addr_info);
 
     if (result != 0) {
-        fprintf(stderr, "%s: unknown host\n", g_tr_data.executable_name);
+        printf("%s: unknown host\n", g_tr_data.executable_name);
         free_resources();
         exit(EXIT_FAILURE);
     }
@@ -23,7 +23,7 @@ struct timeval current_time()
     int get_time_result = gettimeofday(&time, NULL);
     if (get_time_result == -1)
     {
-        fprintf(stderr, "Error when getting time stamp for ping. Error: %s\n", strerror(errno));
+        printf("Error when getting time stamp for ping. Error: %s\n", strerror(errno));
         free_resources();
         exit(EXIT_FAILURE);
     }
@@ -121,7 +121,7 @@ void open_send_socket()
     g_resources.send_socket = socket(AF_INET, SOCK_RAW, IPPROTO_RAW);
     if (g_resources.send_socket == -1) 
     {
-        perror("send socket");
+        printf("send socket %s\n", strerror(errno));
         free_resources();
         exit(EXIT_FAILURE);
     }
@@ -131,7 +131,7 @@ void open_receive_socket()
 {
     g_resources.receive_socket = socket(AF_INET, SOCK_RAW, IPPROTO_ICMP);
     if (g_resources.receive_socket == -1) {
-        perror("receive socket");
+        printf("send socket %s\n", strerror(errno));
         free_resources();
         exit(EXIT_FAILURE);
     }
@@ -141,7 +141,7 @@ void set_ttl(int socket, int ttl)
 {
     if (setsockopt(socket, IPPROTO_IP, IP_TTL, &ttl, sizeof(ttl)) != 0) 
     {
-        perror("error when configuring send socket with setsockopt");
+        printf("error when configuring send socket with setsockopt %s\n", strerror(errno));
         free_resources();
         exit(EXIT_FAILURE);
     }
@@ -151,52 +151,35 @@ void set_recv_timeout(int socket, struct timeval *timeout)
 {
     if (setsockopt(socket, SOL_SOCKET, SO_RCVTIMEO, (const void*)timeout, sizeof(struct timeval)) != 0)
     {
-        perror("error when configuring receive socket with setsockopt");
+        printf("error when configuring send socket with setsockopt %s\n", strerror(errno));
         free_resources();
         exit(EXIT_FAILURE);
     }
 }
 
-void sockaddr_to_ipv4_addr_str(struct sockaddr *sockaddr, char *addr)
+static void in_addr_to_ipv4_str(struct in_addr in_addr, char *str_addr_out) 
+{
+    ft_memset(str_addr_out, 0, INET_ADDRSTRLEN);
+    char *addr = inet_ntoa(in_addr);
+    ft_memcpy(str_addr_out, addr, INET_ADDRSTRLEN);
+}
+
+void sockaddr_to_ipv4_str(struct sockaddr *sockaddr, char *ipv4_str)
 {
     //here i cast struct sockaddr* to struct sockaddr_in* because ai_addr may contain different address structures: struct sockaddr_in* - for ipv4, struct sockaddr_in6* for ipv6
     struct sockaddr_in sockaddr_in = *(struct sockaddr_in*) sockaddr;
-
-    if(inet_ntop(AF_INET,&sockaddr_in.sin_addr, addr, INET_ADDRSTRLEN) == NULL) {
-        
-        fprintf(stderr, "inet_ntop: %s\n", strerror(errno));
-        free_resources();
-        exit(EXIT_FAILURE);
-    }
+    in_addr_to_ipv4_str(sockaddr_in.sin_addr, ipv4_str);
 }
 
-static void int_addr_to_ipv4_addr_str(uint32_t addr, char *str_addr) 
-{
-    struct in_addr in_addr;
-    in_addr.s_addr = addr;
-    ft_memset(str_addr, 0, INET_ADDRSTRLEN);
-    
-    if(inet_ntop(AF_INET,&in_addr, str_addr, INET_ADDRSTRLEN) == NULL) {
-        fprintf(stderr, "inet_ntop: %s\n", strerror(errno));
-        free_resources();
-        exit(EXIT_FAILURE);
-    }
-}
-
-void get_src_addr(void *ip_packet, char *ipv4_addr_str)
+void get_src_addr(void *ip_packet, char *ipv4_str)
 {
     struct iphdr ip_header = *((struct iphdr *) ip_packet); 
-    uint32_t addr = ip_header.saddr;
-    int_addr_to_ipv4_addr_str(addr, ipv4_addr_str);
+    uint32_t saddr = ip_header.saddr;
+    struct in_addr in_addr = { saddr };
+    in_addr_to_ipv4_str(in_addr, ipv4_str);
 }
 
-static void convert_ip_to_string(uint32_t ip, char *str) {
-    struct in_addr ip_addr;
-    ip_addr.s_addr = htonl(ip);  // Convert to network byte order
-    inet_ntop(AF_INET, &ip_addr, str, INET_ADDRSTRLEN);
-}
-
-uint32_t get_local_ip_net_byte_order() 
+uint32_t get_local_ip_net() 
 {
     int sock;
     struct sockaddr_in remote_addr;
@@ -207,7 +190,7 @@ uint32_t get_local_ip_net_byte_order()
 
     sock = socket(AF_INET, SOCK_RAW, IPPROTO_ICMP);
     if (sock < 0) {
-        perror("socket");
+        printf("socket %s\n", strerror(errno));
         close(sock);
         exit(EXIT_FAILURE);
     }
@@ -216,7 +199,7 @@ uint32_t get_local_ip_net_byte_order()
     
     if (setsockopt(sock, SOL_SOCKET, SO_RCVTIMEO, (const void*)&timeout, sizeof(struct timeval)) != 0)
     {
-        perror("setsockopt");
+        printf("setsockopt %s\n", strerror(errno));
         close(sock);
         free_resources();
         exit(EXIT_FAILURE);
@@ -226,7 +209,7 @@ uint32_t get_local_ip_net_byte_order()
     
     if (setsockopt(sock, IPPROTO_IP, IP_TTL, &ttl, sizeof(ttl)) != 0) 
     {
-        perror("setsockopt");
+        printf("setsockopt %s\n", strerror(errno));
         close(sock);
         free_resources();
         exit(EXIT_FAILURE);
@@ -242,7 +225,7 @@ uint32_t get_local_ip_net_byte_order()
     
     if (sendResult < 0) 
     {
-        fprintf(stderr, "Error when sending ICPM packet. Error: %s\n", strerror(errno));
+        printf("Error when sending ICPM packet. Error: %s\n", strerror(errno));
         close(sock);
         free_resources();
         exit(EXIT_FAILURE);
@@ -254,17 +237,13 @@ uint32_t get_local_ip_net_byte_order()
     sendResult = recvfrom(sock, received_ip_packet, 4096, 0, NULL, NULL);
     if (sendResult < 0)
     {
-        fprintf(stderr, "Error when receiving CPM packet. Error: %s\n", strerror(errno));
+        printf("Error when receiving CPM packet. Error: %s\n", strerror(errno));
         close(sock);
         free_resources();
         exit(EXIT_FAILURE);
     }
     close(sock);
     struct iphdr header = *((struct iphdr *) received_ip_packet); 
-
-    char ip[INET_ADDRSTRLEN];
-    
-    convert_ip_to_string(header.daddr, ip);
 
     return header.daddr;
 }

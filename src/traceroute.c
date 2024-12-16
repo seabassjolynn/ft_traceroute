@@ -39,7 +39,7 @@ static struct s_probe probe(uint32_t local_ip_net_byte_order, int hop_num, uint1
     int result = sendto(g_resources.send_socket, &ip_frame, sizeof(ip_frame), 0, (g_resources.target_addr_info)->ai_addr, (g_resources.target_addr_info)->ai_addrlen);
     if (result == -1)
     {
-        fprintf(stderr, "Error when sending UDP packet: %s\n", strerror(errno));
+        printf("Error when sending UDP packet: %s\n", strerror(errno));
         free_resources();
         exit(EXIT_FAILURE);
     }
@@ -82,7 +82,7 @@ static struct s_probe probe(uint32_t local_ip_net_byte_order, int hop_num, uint1
 
 static void print_traceroute_header()
 {
-    printf("traceroute to %s (%s), %d hops max\n", g_tr_data.target_host_arg, g_tr_data.target_addr, MAX_HOPS);
+    printf("traceroute to %s (%s), %d hops max\n", g_tr_data.target_host_arg, g_tr_data.target_ipv4_str, MAX_HOPS);
 }
 
 static void print_hop_num(int hop_num)
@@ -90,19 +90,56 @@ static void print_hop_num(int hop_num)
     printf("%3d   ", hop_num);
 }
 
-static void print_probe(int probe_num_in_hop, struct s_probe *prev_probe, struct s_probe *current_probe)
-{
-    if (probe_num_in_hop != 0)
-            printf("  ");
-    if (current_probe->round_trip_time == -1)
-        printf("*");
-    else if (prev_probe->round_trip_time == -1 || ft_strncmp(prev_probe->remote_addr_str, current_probe->remote_addr_str, INET_ADDRSTRLEN) != 0)
-        printf("%s  %.3fms", current_probe->remote_addr_str, current_probe->round_trip_time);
+static void print_probe(int probe_num_in_hop, struct s_probe *prev_succes_probe, struct s_probe *current_probe)
+{        
+    if (probe_num_in_hop == 0)
+    {
+        if (current_probe->round_trip_time != -1)
+        {
+            printf("%s  %.3fms", current_probe->remote_addr_str, current_probe->round_trip_time);    
+        }
+        else
+        {
+            printf("*");
+        }
+    }
     else
-        printf("%.3fms", current_probe->round_trip_time);
-    fflush(stdout);
+    {
+        if (prev_succes_probe->round_trip_time != -1)
+        {
+            if (current_probe->round_trip_time != -1)
+            {
+                if (ft_strncmp(prev_succes_probe->remote_addr_str, current_probe->remote_addr_str, INET6_ADDRSTRLEN) == 0)
+                {
+                    printf("  %.3fms", current_probe->round_trip_time);
+                }
+                else
+                {
+                    printf("  %s  %.3fms", current_probe->remote_addr_str, current_probe->round_trip_time);
+                }
+            }
+            else
+            {
+                printf("  *");
+            }
+        }
+        else
+        {
+            if (current_probe->round_trip_time != -1)
+            {
+                printf("  %s  %.3fms", current_probe->remote_addr_str, current_probe->round_trip_time);    
+            }
+            else
+            {
+                printf("  *");
+            }
+        }
+    }
+
     if (probe_num_in_hop == PROBES_PER_HOP_NUM - 1)
+    {
         printf("\n");
+    }
 }
 
 void traceroute()
@@ -111,7 +148,7 @@ void traceroute()
     
     int hop_num = 1;
     int port = START_PORT;
-    uint32_t local_ip_net_byte_order = get_local_ip_net_byte_order();
+    uint32_t local_ip_net = get_local_ip_net();
     
     bool reached_destination = false;
     while (!reached_destination)
@@ -121,17 +158,20 @@ void traceroute()
         int probe_num = 0;
         
         struct s_probe prev_probe;
+        prev_probe.round_trip_time = -1;
         
         struct s_probe current_probe;
         current_probe.round_trip_time = -1;
         
         while(probe_num < PROBES_PER_HOP_NUM)
-        {
-            prev_probe = current_probe;
-            
-            current_probe = probe(local_ip_net_byte_order, hop_num, port);
+        {   
+            current_probe = probe(local_ip_net, hop_num, port);
             
             print_probe(probe_num, &prev_probe, &current_probe);
+            if (current_probe.round_trip_time != -1)
+            {
+                prev_probe = current_probe;
+            }
             probe_num++;
         }
         reached_destination = current_probe.reached_destination;

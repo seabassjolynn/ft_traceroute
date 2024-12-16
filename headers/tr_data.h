@@ -16,7 +16,7 @@ struct s_tr_data
 {
     char *executable_name;
     char *target_host_arg;
-    char target_addr[INET_ADDRSTRLEN];
+    char target_ipv4_str[INET_ADDRSTRLEN];
     struct timeval probe_timeout;
     bool print_man_only;
 };

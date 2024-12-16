@@ -93,7 +93,7 @@ void set_ttl(int socket, int ttl);
 
 void set_recv_timeout(int socket, struct timeval *timeout);
 
-void sockaddr_to_ipv4_addr_str(struct sockaddr *sockaddr, char *addr);
+void sockaddr_to_ipv4_str(struct sockaddr *sockaddr, char *addr);
 
 struct s_udp_frame create_udp_frame(struct iphdr *iphdr, uint16_t src_port, uint16_t dst_port, uint32_t data);
 
@@ -107,6 +107,6 @@ struct iphdr create_ip_header(uint8_t ttl, uint32_t src_ip_net, uint32_t dst_ip_
 
 struct s_icmp_echo_frame create_echo_request();
 
-uint32_t get_local_ip_net_byte_order();
+uint32_t get_local_ip_net();
 
 #endif
