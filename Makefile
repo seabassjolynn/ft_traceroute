@@ -11,7 +11,7 @@ OBJS = $(SRCS:.c=.o)
 
 CC = gcc
  
-CFLAGS =  -c -g #-Wall -Wextra -Werror # Flag for implicit rules.
+CFLAGS =  -c -g -Wall -Wextra -Werror # Flag for implicit rules.
 # -Wall - show all error messager
 # -c compile (produce *.o files but not link)
 # -g set symbolic points in file, so debugging is possible

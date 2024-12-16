@@ -7,12 +7,14 @@ static float calc_round_trip_time_ms(struct timeval *start, struct  timeval *end
 
 static bool is_tr_icmp(struct s_icmp_error_frame *frame)
 {
-    return frame->original_data.ip_header.protocol = IPPROTO_UDP && 
-    ((frame->type == ICMP_TYPE_TIME_EXCEEDED && frame->code == ICMP_CODE_TIME_EXCEEDED_IN_TRANSIT) ||
-    (frame->type == ICMP_TYPE_DESTINATION_UNREACHABLE && frame->code == ICMP_CODE_PORT_UNREACHABLE));
+    return (frame->original_data.ip_header.protocol == IPPROTO_UDP) && 
+    (
+        ((frame->type == ICMP_TYPE_TIME_EXCEEDED && frame->code) == (ICMP_CODE_TIME_EXCEEDED_IN_TRANSIT)) ||
+        ((frame->type == ICMP_TYPE_DESTINATION_UNREACHABLE) && (frame->code == ICMP_CODE_PORT_UNREACHABLE))
+    );
 }
 
-static struct s_probe probe(uint32_t local_ip, int hop_num, uint16_t dst_prot)
+static struct s_probe probe(uint32_t local_ip_net_byte_order, int hop_num, uint16_t dst_prot)
 {
     set_ttl(g_resources.send_socket, hop_num);
     
@@ -22,7 +24,7 @@ static struct s_probe probe(uint32_t local_ip, int hop_num, uint16_t dst_prot)
     
     uint32_t timestamp = request_time.tv_sec * 1000000 + request_time.tv_usec;
 
-    uint32_t src_addr = local_ip;
+    uint32_t src_addr = local_ip_net_byte_order;
     uint32_t dst_addr = ((struct sockaddr_in*)g_resources.target_addr_info->ai_addr)->sin_addr.s_addr;
     
     uint16_t src_port = 33434;
@@ -109,9 +111,8 @@ void traceroute()
     
     int hop_num = 1;
     int port = START_PORT;
-    uint32_t local_ip = get_local_ip();
+    uint32_t local_ip_net_byte_order = get_local_ip_net_byte_order();
     
-    char local_addr[INET_ADDRSTRLEN];
     bool reached_destination = false;
     while (!reached_destination)
     {
@@ -128,7 +129,7 @@ void traceroute()
         {
             prev_probe = current_probe;
             
-            current_probe = probe(local_ip, hop_num, port);
+            current_probe = probe(local_ip_net_byte_order, hop_num, port);
             
             print_probe(probe_num, &prev_probe, &current_probe);
             probe_num++;

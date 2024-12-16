@@ -105,7 +105,6 @@ struct iphdr create_ip_header(uint8_t ttl, uint32_t src_ip_net, uint32_t dst_ip_
     hdr.version = 4;
     hdr.tos = 0;
     hdr.tot_len = htons(sizeof(struct iphdr) + payload_len);
-    struct timeval ct = current_time();
     hdr.id = htons(123); //id used to collect fragments of ip frame if ip frame is split, here arbitrary num is used
     hdr.frag_off = 0;
     hdr.ttl = ttl;
@@ -197,7 +196,7 @@ static void convert_ip_to_string(uint32_t ip, char *str) {
     inet_ntop(AF_INET, &ip_addr, str, INET_ADDRSTRLEN);
 }
 
-uint32_t get_local_ip(char *local_ip) 
+uint32_t get_local_ip_net_byte_order() 
 {
     int sock;
     struct sockaddr_in remote_addr;
@@ -223,7 +222,7 @@ uint32_t get_local_ip(char *local_ip)
         exit(EXIT_FAILURE);
     }
     
-    ttl = 3;
+    ttl = 3; //low TTL is chosen to speed up the function (the 3rd node will send us a response). In response the node will return ICMP error reply or echo reply. We are fine with either of them as we will need only dst ip of ip header.
     
     if (setsockopt(sock, IPPROTO_IP, IP_TTL, &ttl, sizeof(ttl)) != 0) 
     {
@@ -266,12 +265,6 @@ uint32_t get_local_ip(char *local_ip)
     char ip[INET_ADDRSTRLEN];
     
     convert_ip_to_string(header.daddr, ip);
-    DEBUG_LOG("Local from ip header: %s\n", ip);
-    
-    struct s_icmp_error_frame *received_icmp_frame = (struct s_icmp_error_frame *) (received_ip_packet + IP_HEADER_LENGTH);
-
-    convert_ip_to_string(received_icmp_frame->original_data.ip_header.saddr, ip);
-    DEBUG_LOG("Local from orig data: %s\n", ip);
 
     return header.daddr;
 }
