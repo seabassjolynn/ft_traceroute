@@ -48,6 +48,7 @@ static struct s_probe probe(uint32_t local_ip_net_byte_order, int hop_num, uint1
     ft_memset(received_ip_packet, 0, IP_PACKET_BUFFER_LENGTH);
     
     struct s_probe probe;
+    probe.reached_destination = false;
     probe.round_trip_time = -1;
     
     while ((result = recvfrom(g_resources.receive_socket, received_ip_packet, IP_PACKET_BUFFER_LENGTH, 0, NULL, NULL)) > 0)

@@ -4,6 +4,17 @@
 #include "resources.h"
 #include "net.h"
 #include "traceroute.h"
+#include<signal.h>  // for handling signal 
+
+#define EXIT_SIGN_TERM 130
+
+void handle_sigint(int signal) 
+{
+    if (signal == SIGINT) {
+        free_resources();
+        exit(EXIT_SIGN_TERM);
+    }
+}
 
 static void print_man() {
     printf("Usage: %s --help | HOST\n", g_tr_data.executable_name);
@@ -14,13 +25,15 @@ static void print_man() {
 
 int main(int ac, char **av)
 {
+    signal(SIGINT,handle_sigint);
+    
     set_defaults();
     parse_args(ac, av);
 
     if (g_tr_data.print_man_only)
     {
         print_man();
-        exit(EXIT_SUCCESS);
+        exit(130);
     }
 
     init_resouces();
