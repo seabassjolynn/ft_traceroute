@@ -14,7 +14,18 @@ void init_resouces()
 
 void free_resources()
 {
-    close(g_resources.send_socket);
-    close(g_resources.receive_socket);
-    freeaddrinfo(g_resources.target_addr_info);
+    if (g_resources.send_socket != -1)
+    {
+        close(g_resources.send_socket);
+    }
+    
+    if (g_resources.receive_socket != -1) 
+    {
+        close(g_resources.receive_socket);
+    }
+    
+    if (g_resources.target_addr_info != NULL) 
+    {
+        freeaddrinfo(g_resources.target_addr_info);
+    }
 }

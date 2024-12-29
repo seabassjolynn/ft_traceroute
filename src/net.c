@@ -179,7 +179,7 @@ void get_src_addr(void *ip_packet, char *ipv4_str)
     in_addr_to_ipv4_str(in_addr, ipv4_str);
 }
 
-uint32_t get_local_ip_net() 
+struct in_addr get_local_ip() 
 {
     int sock;
     struct sockaddr_in remote_addr;
@@ -244,8 +244,8 @@ uint32_t get_local_ip_net()
     }
     close(sock);
     struct iphdr header = *((struct iphdr *) received_ip_packet); 
-
-    return header.daddr;
+    struct in_addr in_addr = {header.daddr};
+    return in_addr;
 }
 
 struct s_icmp_echo_frame create_echo_request()

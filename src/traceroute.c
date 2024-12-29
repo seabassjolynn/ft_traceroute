@@ -14,7 +14,7 @@ static bool is_tr_icmp(struct s_icmp_error_frame *frame)
     );
 }
 
-static struct s_probe probe(uint32_t local_ip_net_byte_order, int hop_num, uint16_t dst_prot)
+static struct s_probe probe(struct in_addr local_ip, int hop_num, uint16_t dst_prot)
 {
     set_ttl(g_resources.send_socket, hop_num);
     
@@ -24,7 +24,7 @@ static struct s_probe probe(uint32_t local_ip_net_byte_order, int hop_num, uint1
     
     uint32_t timestamp = request_time.tv_sec * 1000000 + request_time.tv_usec;
 
-    uint32_t src_addr = local_ip_net_byte_order;
+    uint32_t src_addr = local_ip.s_addr;
     uint32_t dst_addr = ((struct sockaddr_in*)g_resources.target_addr_info->ai_addr)->sin_addr.s_addr;
     
     uint16_t src_port = 33434;
@@ -149,7 +149,7 @@ void traceroute()
     
     int hop_num = 1;
     int port = START_PORT;
-    uint32_t local_ip_net = get_local_ip_net();
+    struct in_addr local_ip = get_local_ip();
     
     bool reached_destination = false;
     while (!reached_destination)
@@ -166,7 +166,7 @@ void traceroute()
         
         while(probe_num < PROBES_PER_HOP_NUM)
         {   
-            current_probe = probe(local_ip_net, hop_num, port);
+            current_probe = probe(local_ip, hop_num, port);
             
             print_probe(probe_num, &prev_probe, &current_probe);
             if (current_probe.round_trip_time != -1)

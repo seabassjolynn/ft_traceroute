@@ -107,6 +107,6 @@ struct iphdr create_ip_header(uint8_t ttl, uint32_t src_ip_net, uint32_t dst_ip_
 
 struct s_icmp_echo_frame create_echo_request();
 
-uint32_t get_local_ip_net();
+struct in_addr get_local_ip();
 
 #endif

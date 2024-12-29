@@ -2,7 +2,7 @@
 
 struct s_tr_data g_tr_data;
 
-void set_defaults()
+void init_tr_data()
 {
     struct timeval timeval;
     timeval.tv_sec = 2;

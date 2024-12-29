@@ -27,13 +27,13 @@ int main(int ac, char **av)
 {
     signal(SIGINT,handle_sigint);
     
-    set_defaults();
+    init_tr_data();
     parse_args(ac, av);
 
     if (g_tr_data.print_man_only)
     {
         print_man();
-        exit(130);
+        exit(EXIT_SUCCESS);
     }
 
     init_resouces();

@@ -8,7 +8,7 @@
 
 extern struct s_tr_data g_tr_data;
 
-void set_defaults(void);
+void init_tr_data(void);
 
 void parse_args(int ac, char *av[]);
 
