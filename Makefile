@@ -31,8 +31,8 @@ endif
 all: $(APP)
 	
 
-$(APP): $(OBJS) $(HEADERS) #here this OBJS variable is expaned to list of .o files. And make will go and look for rule that corresponds to name.o file. And it will find this rule in %.o : %.c
-	@ echo target $(APP_NAME)
+$(APP): $(OBJS) #here this OBJS variable is expaned to list of .o files. And make will go and look for rule that corresponds to name.o file. And it will find this rule in %.o : %.c
+	@ echo link executable: $(APP_NAME)
 	@ $(CC) -o $(APP) $(OBJS) -lm #-lm to link math library, otherwise can not compile
 # -o is compiler flag to produce object *.o file with particular name 
 
@@ -41,8 +41,8 @@ $(APP): $(OBJS) $(HEADERS) #here this OBJS variable is expaned to list of .o fil
 # @ echo target means that command itself will not be printed to console
 #$(HEADERS) <- ADD WHEN I HAVE HEADERS
 
-%.o: %.c
-	@ echo target $@
+%.o: %.c $(HEADERS)
+	@ echo compile $@
 	$(CC) $(CFLAGS) -I$(HEADERS_DIR) $< -o $@
 
 clean:
